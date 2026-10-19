@@ -75,7 +75,7 @@ fn jar_files(mods: &Path) -> Vec<PathBuf> {
 }
 
 fn scan(mods: &Path) {
-    if (!mods.is_dir() && !mods.extension().map_or(false, |x| x.eq_ignore_ascii_case("jar"))) {
+    if !mods.is_dir() && !mods.extension().map_or(false, |x| x.eq_ignore_ascii_case("jar")) {
         println!("Cannot to open this script with : {}", mods.display());
     }
 
@@ -95,9 +95,9 @@ fn scan(mods: &Path) {
     }
     if found == 0 { 
         println!("No broken jar found."); 
-    } else if (found == 1) {
+    } else if found == 1 {
         println!("Remove this mod to stop your current crash.");
-    } else if (found > 1) {
+    } else if found > 1 {
         println!("Remove these mods to stop your current crash.");
     }
 
@@ -122,21 +122,23 @@ fn main() {
         return;
     }
 
-    let mut windows_default_path = PathBuf::from(env::var("USERPROFILE").unwrap_or_default()).join("curseforge").join("minecraft").join("Instances");
+    let windows_default_path = PathBuf::from(env::var("USERPROFILE").unwrap_or_default()).join("curseforge").join("minecraft").join("Instances");
 
-    let mut windows_c_path = PathBuf::from("C:").join("curseforge").join("minecraft").join("instances");
-    let mut windows_d_path = PathBuf::from("D:").join("curseforge").join("minecraft").join("instances");
-    let mut windows_e_path = PathBuf::from("E:").join("curseforge").join("minecraft").join("instances");
+    let windows_c_path = PathBuf::from("C:").join("curseforge").join("minecraft").join("instances");
+    let windows_d_path = PathBuf::from("D:").join("curseforge").join("minecraft").join("instances");
+    let windows_e_path = PathBuf::from("E:").join("curseforge").join("minecraft").join("instances");
 
-    let mut mac_path = PathBuf::from("");
-    let mut linux_path = PathBuf::from("");
+    let mac_path = PathBuf::from("");
+    let linux_path = PathBuf::from("");
     
-    let mut resolved_path;
+    let resolved_path;
 
     if windows_default_path.is_dir() {
         resolved_path = windows_default_path;
     } else if windows_c_path.is_dir() {
         resolved_path = windows_c_path;
+    } else if windows_d_path.is_dir() {
+        resolved_path = windows_d_path;
     } else if windows_e_path.is_dir() {
         resolved_path = windows_e_path;
     } else if mac_path.is_dir() {
@@ -149,7 +151,7 @@ fn main() {
     }
 
 
-        loop {
+    loop {
         // every instance that has a mods folder
         let mut insts: Vec<PathBuf> = match fs::read_dir(&resolved_path) {
             Ok(rd) => rd.flatten().map(|e| e.path()).filter(|p| p.join("mods").is_dir()).collect(),
@@ -164,17 +166,19 @@ fn main() {
 
         println!("\nInstances in {}:\n", resolved_path.display());
         for (i, p) in insts.iter().enumerate() {
-            let n = jar_files(&p.join("mods")).len();
-            println!("  {:>2}. {}  ({} jars)", i + 1, p.file_name().unwrap().to_string_lossy(), n);
+            let jar_number = jar_files(&p.join("mods")).len();
+
+            println!("  {:>2}. {}  ({} jars)", i + 1, p.file_name().unwrap().to_string_lossy(), jar_number);
         }
 
         let entry = prompt("\nSelect the number corresponding to your modpack: ");
         
         match entry.parse::<usize>() {
-            Ok(n) if n >= 1 && n <= insts.len() => {
-                println!("\n=== {} ===", insts[n - 1].file_name().unwrap().to_string_lossy());
-                    scan(&insts[n - 1].join("mods"));
-                }
+            Ok(jar_number) if jar_number >= 1 && jar_number <= insts.len() => {
+                println!("\n=== {} ===", insts[jar_number - 1].file_name().unwrap().to_string_lossy());
+                
+                scan(&insts[jar_number - 1].join("mods"));
+            }
             _ => println!("Invalid choice."),
         }
     }
